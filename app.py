@@ -6,22 +6,24 @@ import string
 # Page settings
 st.set_page_config(
     page_title="Password Strength Analyzer",
-    page_icon="🔐",
-    layout="centered"
+    page_icon="🔐"
 )
 
 # Title
 st.title("🔐 Password Strength Analyzer")
 st.write(
-    "Analyze your password strength using Python "
-    "and basic data analysis."
+    "A Python-based tool to analyze password strength "
+    "and study password security patterns."
 )
 
 st.divider()
 
-# Password input
+# ---------------- PASSWORD CHECKER ----------------
+
+st.header("🔑 Check Your Password")
+
 password = st.text_input(
-    "🔑 Enter your password:",
+    "Enter your password:",
     type="password"
 )
 
@@ -30,7 +32,7 @@ if password:
     score = 0
     suggestions = []
 
-    # Password length
+    # Length
     length = len(password)
 
     if length >= 8:
@@ -42,7 +44,7 @@ if password:
 
     # Uppercase
     uppercase = sum(
-        1 for char in password if char.isupper()
+        char.isupper() for char in password
     )
 
     if uppercase > 0:
@@ -54,7 +56,7 @@ if password:
 
     # Lowercase
     lowercase = sum(
-        1 for char in password if char.islower()
+        char.islower() for char in password
     )
 
     if lowercase > 0:
@@ -66,7 +68,7 @@ if password:
 
     # Numbers
     numbers = sum(
-        1 for char in password if char.isdigit()
+        char.isdigit() for char in password
     )
 
     if numbers > 0:
@@ -78,8 +80,7 @@ if password:
 
     # Special characters
     special = sum(
-        1 for char in password
-        if char in string.punctuation
+        char in string.punctuation for char in password
     )
 
     if special > 0:
@@ -105,13 +106,9 @@ if password:
     # Score
     st.subheader("📊 Strength Score")
 
-    st.write(
-        f"Your score is **{score}/5**"
-    )
+    st.write("Score:", str(score) + "/5")
 
     st.progress(score / 5)
-
-    st.divider()
 
     # Character analysis
     st.subheader("🔍 Character Analysis")
@@ -119,8 +116,9 @@ if password:
     col1, col2 = st.columns(2)
 
     with col1:
+
         st.metric(
-            "Password Length",
+            "Length",
             length
         )
 
@@ -135,6 +133,7 @@ if password:
         )
 
     with col2:
+
         st.metric(
             "Numbers",
             numbers
@@ -148,7 +147,7 @@ if password:
     # Suggestions
     if suggestions:
 
-        st.subheader("💡 Suggestions")
+        st.subheader("💡 Improve Your Password")
 
         for suggestion in suggestions:
             st.write("• " + suggestion)
@@ -156,12 +155,12 @@ if password:
     else:
 
         st.success(
-            "🎉 Excellent! Your password satisfies "
-            "all basic security requirements."
+            "🎉 Your password meets all basic requirements!"
         )
 
 
-# Dataset analysis
+# ---------------- DATA ANALYSIS ----------------
+
 st.divider()
 
 st.header("📈 IDS Data Analysis")
@@ -170,36 +169,117 @@ try:
 
     data = pd.read_csv("passwords.csv")
 
-    # Calculate length
+    # Calculate password length
     data["length"] = data["password"].str.len()
 
-    # Total passwords
+    # Total
     total = len(data)
 
-    st.metric(
-        "Total Sample Passwords",
-        total
+    # Count categories
+    weak = len(
+        data[data["strength"] == "Weak"]
     )
 
-    # Strength distribution
-    strength_count = data["strength"].value_counts()
+    medium = len(
+        data[data["strength"] == "Medium"]
+    )
 
+    strong = len(
+        data[data["strength"] == "Strong"]
+    )
+
+    # Display statistics
+    st.subheader("📊 Dataset Statistics")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.metric(
+            "Total Passwords",
+            total
+        )
+
+        st.metric(
+            "Weak Passwords",
+            weak
+        )
+
+    with col2:
+
+        st.metric(
+            "Medium Passwords",
+            medium
+        )
+
+        st.metric(
+            "Strong Passwords",
+            strong
+        )
+
+    # Percentages
+    st.subheader("📌 Password Percentages")
+
+    weak_percent = (weak / total) * 100
+    medium_percent = (medium / total) * 100
+    strong_percent = (strong / total) * 100
+
+    st.write(
+        "🔴 Weak:",
+        round(weak_percent, 2),
+        "%"
+    )
+
+    st.write(
+        "🟠 Medium:",
+        round(medium_percent, 2),
+        "%"
+    )
+
+    st.write(
+        "🟢 Strong:",
+        round(strong_percent, 2),
+        "%"
+    )
+
+    # Bar chart
     st.subheader(
-        "📊 Password Strength Distribution"
+        "📊 Strength Distribution"
     )
 
-    st.bar_chart(strength_count)
+    chart_data = pd.DataFrame(
+        {
+            "Strength": [
+                "Weak",
+                "Medium",
+                "Strong"
+            ],
+            "Number of Passwords": [
+                weak,
+                medium,
+                strong
+            ]
+        }
+    )
+
+    st.bar_chart(
+        chart_data.set_index("Strength")
+    )
 
     # Pie chart
     st.subheader(
-        "🥧 Strength Distribution"
+        "🥧 Password Strength Percentage"
     )
 
     fig, ax = plt.subplots()
 
     ax.pie(
-        strength_count.values,
-        labels=strength_count.index,
+        [weak, medium, strong],
+        labels=[
+            "Weak",
+            "Medium",
+            "Strong"
+        ],
         autopct="%1.1f%%"
     )
 
@@ -212,19 +292,21 @@ try:
     # Average length
     average_length = data["length"].mean()
 
+    st.subheader(
+        "📏 Password Length Analysis"
+    )
+
     st.metric(
         "Average Password Length",
         round(average_length, 2)
     )
 
-    # Length analysis
-    st.subheader(
-        "📏 Password Length Analysis"
+    # Length chart
+    st.line_chart(
+        data["length"]
     )
 
-    st.line_chart(data["length"])
-
-    # Dataset
+    # Dataset table
     st.subheader(
         "📋 Sample Dataset"
     )
@@ -234,11 +316,31 @@ try:
 except Exception:
 
     st.error(
-        "Unable to load the password dataset."
+        "Unable to load passwords.csv"
     )
 
-# Footer
+
+# ---------------- PROJECT INFORMATION ----------------
+
 st.divider()
+
+st.header("🎓 About This Project")
+
+st.write(
+    "This project uses Python to analyze password "
+    "characteristics and classify passwords as Weak, "
+    "Medium, or Strong."
+)
+
+st.write(
+    "Pandas is used for data analysis and Matplotlib "
+    "is used for data visualization."
+)
+
+st.write(
+    "The project demonstrates basic concepts of "
+    "data analysis, classification and visualization."
+)
 
 st.caption(
     "🔐 Password Strength Analyzer | "
