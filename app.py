@@ -3,24 +3,25 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import string
 
+# Page settings
 st.set_page_config(
     page_title="Password Strength Analyzer",
-    page_icon="🔐"
+    page_icon="🔐",
+    layout="centered"
 )
 
-# -------------------------------
-# TITLE
-# -------------------------------
-
+# Title
 st.title("🔐 Password Strength Analyzer")
-st.write("Analyze your password and understand its strength.")
+st.write(
+    "Analyze your password strength using Python "
+    "and basic data analysis."
+)
 
-# -------------------------------
-# PASSWORD CHECKER
-# -------------------------------
+st.divider()
 
+# Password input
 password = st.text_input(
-    "Enter your password:",
+    "🔑 Enter your password:",
     type="password"
 )
 
@@ -29,129 +30,217 @@ if password:
     score = 0
     suggestions = []
 
-    # Length
-    if len(password) >= 8:
+    # Password length
+    length = len(password)
+
+    if length >= 8:
         score += 1
     else:
-        suggestions.append("Use at least 8 characters.")
+        suggestions.append(
+            "Use at least 8 characters."
+        )
 
     # Uppercase
-    if any(char.isupper() for char in password):
+    uppercase = sum(
+        1 for char in password if char.isupper()
+    )
+
+    if uppercase > 0:
         score += 1
     else:
-        suggestions.append("Add an uppercase letter.")
+        suggestions.append(
+            "Add at least one uppercase letter."
+        )
 
     # Lowercase
-    if any(char.islower() for char in password):
-        score += 1
-    else:
-        suggestions.append("Add a lowercase letter.")
+    lowercase = sum(
+        1 for char in password if char.islower()
+    )
 
-    # Number
-    if any(char.isdigit() for char in password):
+    if lowercase > 0:
         score += 1
     else:
-        suggestions.append("Add a number.")
+        suggestions.append(
+            "Add at least one lowercase letter."
+        )
 
-    # Special character
-    if any(char in string.punctuation for char in password):
+    # Numbers
+    numbers = sum(
+        1 for char in password if char.isdigit()
+    )
+
+    if numbers > 0:
         score += 1
     else:
-        suggestions.append("Add a special character.")
+        suggestions.append(
+            "Add at least one number."
+        )
+
+    # Special characters
+    special = sum(
+        1 for char in password
+        if char in string.punctuation
+    )
+
+    if special > 0:
+        score += 1
+    else:
+        suggestions.append(
+            "Add at least one special character."
+        )
 
     # Strength
     if score <= 2:
         strength = "Weak"
+        st.error("🔴 Password Strength: WEAK")
+
     elif score <= 4:
         strength = "Medium"
+        st.warning("🟠 Password Strength: MEDIUM")
+
     else:
         strength = "Strong"
+        st.success("🟢 Password Strength: STRONG")
 
-    # -------------------------------
-    # DISPLAY RESULTS
-    # -------------------------------
+    # Score
+    st.subheader("📊 Strength Score")
 
-    st.subheader("📊 Password Analysis")
-
-    st.write("Password Length:", len(password))
-    st.write("Score:", str(score) + "/5")
-
-    if strength == "Weak":
-        st.error("🔴 Strength: Weak")
-
-    elif strength == "Medium":
-        st.warning("🟠 Strength: Medium")
-
-    else:
-        st.success("🟢 Strength: Strong")
+    st.write(
+        f"Your score is **{score}/5**"
+    )
 
     st.progress(score / 5)
 
-    # Suggestions
+    st.divider()
 
+    # Character analysis
+    st.subheader("🔍 Character Analysis")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "Password Length",
+            length
+        )
+
+        st.metric(
+            "Uppercase",
+            uppercase
+        )
+
+        st.metric(
+            "Lowercase",
+            lowercase
+        )
+
+    with col2:
+        st.metric(
+            "Numbers",
+            numbers
+        )
+
+        st.metric(
+            "Special Characters",
+            special
+        )
+
+    # Suggestions
     if suggestions:
 
         st.subheader("💡 Suggestions")
 
         for suggestion in suggestions:
-            st.write("•", suggestion)
+            st.write("• " + suggestion)
 
     else:
 
         st.success(
-            "🎉 Excellent! Your password meets all basic requirements."
+            "🎉 Excellent! Your password satisfies "
+            "all basic security requirements."
         )
 
 
-# -------------------------------
-# DATASET ANALYSIS
-# -------------------------------
-
+# Dataset analysis
 st.divider()
 
-st.header("📈 Dataset Analysis")
+st.header("📈 IDS Data Analysis")
 
 try:
 
     data = pd.read_csv("passwords.csv")
 
-    # Total passwords
+    # Calculate length
+    data["length"] = data["password"].str.len()
 
+    # Total passwords
     total = len(data)
 
-    st.write("Total Sample Passwords:", total)
+    st.metric(
+        "Total Sample Passwords",
+        total
+    )
 
-    # Strength count
-
+    # Strength distribution
     strength_count = data["strength"].value_counts()
 
-    st.subheader("Password Strength Distribution")
+    st.subheader(
+        "📊 Password Strength Distribution"
+    )
 
     st.bar_chart(strength_count)
 
+    # Pie chart
+    st.subheader(
+        "🥧 Strength Distribution"
+    )
+
+    fig, ax = plt.subplots()
+
+    ax.pie(
+        strength_count.values,
+        labels=strength_count.index,
+        autopct="%1.1f%%"
+    )
+
+    ax.set_title(
+        "Password Strength Distribution"
+    )
+
+    st.pyplot(fig)
+
     # Average length
-
-    data["length"] = data["password"].str.len()
-
     average_length = data["length"].mean()
 
-    st.write(
-        "Average Password Length:",
+    st.metric(
+        "Average Password Length",
         round(average_length, 2)
     )
 
-    # Length chart
-
-    st.subheader("Password Length Analysis")
+    # Length analysis
+    st.subheader(
+        "📏 Password Length Analysis"
+    )
 
     st.line_chart(data["length"])
 
-    # Dataset table
-
-    st.subheader("Sample Dataset")
+    # Dataset
+    st.subheader(
+        "📋 Sample Dataset"
+    )
 
     st.dataframe(data)
 
-except Exception as e:
+except Exception:
 
-    st.error("Dataset could not be loaded.")
+    st.error(
+        "Unable to load the password dataset."
+    )
+
+# Footer
+st.divider()
+
+st.caption(
+    "🔐 Password Strength Analyzer | "
+    "Python + Streamlit | IDS Project"
+)
